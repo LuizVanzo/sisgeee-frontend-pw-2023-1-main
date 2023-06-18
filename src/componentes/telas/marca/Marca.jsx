@@ -2,42 +2,48 @@ import { useState, useEffect } from 'react';
 import MarcaContext from './MarcaContext';
 import Tabela from './Tabela';
 import Form from './form';
+import WithAuth from "../../seg/WithAuth";
+import { useNavigate } from "react-router-dom";
+import Carregando from '../../comuns/Carregando';
+
+import { getMarcasAPI, getMarcaPorCodigoAPI, deleteMarcaPorCodigoAPI, cadastraMarcasAPI } from '../../servicos/MarcaServico';
 
 function Marca() {
+
+    let navigate = useNavigate();
 
     const [alerta, setAlerta] = useState({ status: "", message: "" });
     const [listaObjetos, setListaObjetos] = useState([]);
     const [editar, setEditar] = useState(false);
     const [objeto, setObjeto] = useState({
         codigo: "", nome: "", pais: ""
-    })
-	
-   const recuperar = async codigo => {    
-    await fetch(`${process.env.REACT_APP_ENDERECO_API}/marcas/${codigo}`)
-        .then(response => response.json())
-        .then(data => setObjeto(data))
-        .catch(err => setAlerta({status : "error", message: err}))
+    });
+    const [carregando, setCarrengando] = useState(true);
+
+    const recuperar = async codigo => {
+        try {
+            setObjeto(await getMarcaPorCodigoAPI(codigo));
+        } catch (err) {
+            window.location.reload();
+            navigate("/login", { replace: true });
+        }
     }
 
     const acaoCadastrar = async e => {
         e.preventDefault();
         const metodo = editar ? "PUT" : "POST";
         try {
-            await fetch(`${process.env.REACT_APP_ENDERECO_API}/marcas`, {
-                method: metodo,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(objeto),
-            }).then(response => response.json())
-                .then(json => {
-                    setAlerta({ status: json.status, message: json.message });
-                    setObjeto(json.objeto);
-                    if (!editar) {
-                        setEditar(true);
-                    }
-                });
+            let retornoAPI = await cadastraMarcasAPI(objeto, metodo);
+            setAlerta({ status: retornoAPI.status, message: retornoAPI.message });
+            setObjeto(retornoAPI.objeto);
+            if (!editar) {
+                setEditar(true);
+            }
         } catch (err) {
-            console.error(err.message);
-        }       
+            console.log(err);
+            window.location.reload();
+            navigate("/login", { replace: true });
+        }
         recuperaMarcas();
     }
 
@@ -45,27 +51,30 @@ function Marca() {
         const name = e.target.name;
         const value = e.target.value;
         setObjeto({ ...objeto, [name]: value });
-    }	    
+    }    
 
     const recuperaMarcas = async () => {
-        await fetch(`${process.env.REACT_APP_ENDERECO_API}/marcas`)
-            .then(response => response.json())
-            .then(data => setListaObjetos(data))
-            .catch(err => setAlerta({status : "error", message: err}))
+        try {
+            setCarrengando(true);
+            setListaObjetos(await getMarcasAPI());
+            setCarrengando(false);
+        } catch (err) {
+            window.location.reload();
+            navigate("/login", { replace: true });
+        }
     }
 
     const remover = async objeto => {
         if (window.confirm('Deseja remover este objeto?')) {
             try {
-                await fetch(`${process.env.REACT_APP_ENDERECO_API}/marcas/${objeto.codigo}`,
-                    { method: "DELETE" })
-                    .then(response => response.json())
-                    .then(json => setAlerta({ status: json.status, message: json.message }))
-                recuperaMarcas();
+                let retornoAPI = await deleteMarcaPorCodigoAPI(objeto.codigo);
+                setAlerta({ status: retornoAPI.status, message: retornoAPI.message });
             } catch (err) {
-                console.log('Erro: ' + err)
+                window.location.reload();
+                navigate("/login", { replace: true });
             }
         }
+        recuperaMarcas();
     }
 
     useEffect(() => {
@@ -83,10 +92,12 @@ function Marca() {
                 recuperar, acaoCadastrar, handleChange
             }
         }>
-            <Tabela />
+            <Carregando carregando={carregando}>
+                <Tabela />
+            </Carregando>
             <Form />
         </MarcaContext.Provider>
     );
 }
 
-export default Marca;
+export default WithAuth(Marca);

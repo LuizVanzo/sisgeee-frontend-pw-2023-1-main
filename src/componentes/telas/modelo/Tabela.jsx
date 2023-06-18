@@ -1,10 +1,10 @@
 import { useContext } from 'react'
 import ModeloContext from './ModeloContext';
-import Alerta from '../../comuns/alerta';
+import Alerta from '../../comuns/Alerta';
 
 function Tabela() {
 
-    const { setObjeto, alerta, setAlerta, listaObjetos, remover, setEditar, recuperar} = useContext(ModeloContext);
+    const { setObjeto, alerta, setAlerta, listaObjetos, remover, setEditar, recuperar, recuperarCarros} = useContext(ModeloContext);
 
     return (
         <div style={{ padding: '20px' }}>
@@ -57,6 +57,13 @@ function Tabela() {
                                     onClick={() => { remover(objeto); }}>
                                     <i className="bi bi-trash"></i>
                                 </button>
+                                <button className="btn btn-success" title="Carros"
+                                            onClick={() => {
+                                                recuperarCarros(objeto.codigo);
+                                                setAlerta({ status: "", message: "" });
+                                            }}>
+                                            <i className="bi bi-pc-display"></i>
+                                        </button>                                  
                             </td>
                             <td>{objeto.codigo}</td>
                             <td>{objeto.nome}</td>

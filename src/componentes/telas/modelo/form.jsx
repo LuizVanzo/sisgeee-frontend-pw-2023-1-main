@@ -1,138 +1,49 @@
 import { useContext } from 'react'
-import Alerta from '../../comuns/alerta';
+import Alerta from '../../comuns/Alerta';
 import ModeloContext from './ModeloContext';
+import CampoEntrada from "../../comuns/CampoEntrada";
+import Dialogo from "../../comuns/Dialogo";
 
 function Form() {
 
     const { objeto, handleChange, acaoCadastrar, alerta } = useContext(ModeloContext);
 
-    // Example starter JavaScript for disabling form submissions if there are invalid fields
-    (function () {
-    'use strict'
-  
-    // Fetch all the forms we want to apply custom Bootstrap validation styles to
-    var forms = document.querySelectorAll('.needs-validation')
-  
-    // Loop over them and prevent submission
-    Array.prototype.slice.call(forms)
-      .forEach(function (form) {
-        form.addEventListener('submit', function (event) {
-          if (!form.checkValidity()) {
-            event.preventDefault()
-            event.stopPropagation()
-          }
-  
-          form.classList.add('was-validated')
-        }, false)
-      })
-    })()	  
-
     return (
-        <div className="modal fade" id="modalEdicao" tabIndex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div className="modal-dialog">
-                <div className="modal-content">
-                    <div className="modal-header">
-                        <h5 className="modal-title" id="exampleModalLabel">Modelo</h5>
-                        <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <form id="formulario" onSubmit={acaoCadastrar} className="needs-validation" noValidate>
-                        <div className="modal-body">
-                            <Alerta alerta={alerta} />
-                            <div className="form-group">
-                                <label htmlFor="txtCodido" className="form-label">
-                                    Código
-                                </label>
-                                <input
-                                    type="text"
-                                    readOnly
-                                    className="form-control"
-                                    id="txtCodido"
-                                    name="codigo"
-                                    value={objeto.codigo}
-                                    onChange={handleChange}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor="txtNome" className="form-label">
-                                    Nome
-                                </label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    id="txtNome"
-                                    name="nome"
-                                    value={objeto.nome}
-                                    onChange={handleChange}
-                                    required
-                                />
-                                <div class="invalid-feedback">
-                                    Informe o nome
-                                </div>
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor="txtPais" className="form-label">
-                                    Número de Portas
-                                </label>
-                                <input
-                                    type="number"
-                                    className="form-control"
-                                    id="txtSite"
-                                    name="numero_portas"
-                                    value={objeto.numero_portas}
-                                    onChange={handleChange}
-                                    required
-                                />
-                                <div class="invalid-feedback">
-                                    Informe o Número de Portas
-                                </div>
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor="txtLugares" className="form-label">
-                                    Lugares
-                                </label>
-                                <input
-                                    type="number"
-                                    className="form-control"
-                                    id="txtLugares"
-                                    name="lugares"
-                                    value={objeto.lugares}
-                                    onChange={handleChange}
-                                    required
-                                />
-                                <div class="invalid-feedback">
-                                    Informe o Número de Lugares
-                                </div>
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor="txtMarca" className="form-label">
-                                    ID Marca
-                                </label>
-                                <input
-                                    type="number"
-                                    className="form-control"
-                                    id="txtMarca"
-                                    name="marca"
-                                    value={objeto.marca}
-                                    onChange={handleChange}
-                                    required
-                                />
-                                <div class="invalid-feedback">
-                                    Informe o ID da Marca
-                                </div>
-                            </div>
+        <Dialogo id="modalEdicao" titulo="Modelos"
+        acaoCadastrar={acaoCadastrar} idform="formulario">
+        <Alerta alerta={alerta} />
+        <CampoEntrada id="txtCodigo" label="Código"
+                tipo="number" name="codigo" value={objeto.codigo}
+                onchange={handleChange} requerido={false}
+                readonly={true} />
+        <CampoEntrada id="txtNome" label="Nome"
+            tipo="text" name="nome" value={objeto.nome}
+            onchange={handleChange} requerido={true}
+            readonly={false} maxlength={40}
+            msgvalido="Nome OK"
+            msginvalido="Informe o nome" />
+        <CampoEntrada id="txtPortas" label="Número de portas"
+            tipo="number" name="numero_portas" value={objeto.numero_portas}
+            onchange={handleChange} requerido={true}
+            readonly={false} 
+            msgvalido="Descrição OK"
+            msginvalido="Informe o Número de Portas" />
 
-                        </div>
-                        <div className="modal-footer">
-                            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                            <button type="submit" className="btn btn-success" >
-                                Salvar  <i className="bi bi-save"></i>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
+        <CampoEntrada id="txtLugares" label="Lugares"
+            tipo="number" name="lugares"
+            value={objeto.lugares}
+            onchange={handleChange} requerido={true}
+            readonly={false} 
+            msgvalido="Descrição OK"
+            msginvalido="Informe o Número de Lugares" />
+        <CampoEntrada id="txtMarca" label="Marca"
+            tipo="number" name="marca"
+            value={objeto.marca}
+            onchange={handleChange} requerido={true}
+            readonly={false} 
+            msgvalido="Descrição OK"
+            msginvalido="Informe o Informe o ID da Marca" />
+    </Dialogo>
     )
 }
 

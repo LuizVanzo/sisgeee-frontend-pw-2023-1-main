@@ -2,42 +2,112 @@ import { useState, useEffect } from 'react';
 import ModeloContext from './ModeloContext';
 import Tabela from './Tabela';
 import Form from './form';
+import WithAuth from "../../seg/WithAuth";
+import { useNavigate } from "react-router-dom";
+import Carregando from '../../comuns/Carregando';
+import {
+    getCarrosDoModeloAPI, getCarroPorCodigoAPI,
+    deleteCarroPorCodigoAPI, cadastraCarrosAPI
+} from '../../servicos/CarroServico';
+import FormCarro from "./formCarro";
+import TabelaCarro from './TabelaCarro';
+
+import { getModelosAPI, getModeloPorCodigoAPI, deleteModeloPorCodigoAPI, cadastraModelosAPI } from '../../servicos/ModeloServico';
 
 function Modelo() {
+
+    let navigate = useNavigate();
 
     const [alerta, setAlerta] = useState({ status: "", message: "" });
     const [listaObjetos, setListaObjetos] = useState([]);
     const [editar, setEditar] = useState(false);
     const [objeto, setObjeto] = useState({
         codigo: "", nome: "", numero_portas: "",lugares: "",marca: ""
+    });
+    const [carregando, setCarrengando] = useState(true);
+    const [editarCarro, setEditarCarro] = useState(false);
+    const [carro, setCarro] = useState({
+        codigo: "", placa: "", disponivel: "", km: "", modelo: ""
     })
+    const [listaCarros, setListaCarros] = useState([]);
+    const [exibirCarros, setExibirCarros] = useState(false);
 	
-   const recuperar = async codigo => {    
-    await fetch(`${process.env.REACT_APP_ENDERECO_API}/modelos/${codigo}`)
-        .then(response => response.json())
-        .then(data => setObjeto(data))
-        .catch(err => setAlerta({status : "error", message: err}))
+    const recuperarCarros = async codigocarro => {
+        try {
+            setObjeto(await getModeloPorCodigoAPI(codigocarro));
+            setListaCarros(await getCarrosDoModeloAPI(codigocarro));
+            setExibirCarros(true);
+        } catch (err) {
+            window.location.reload();
+            navigate("/login", { replace: true });
+        }
+    }
+
+    const recuperarCarro = async codigo => {
+        try {
+            setCarro(await getCarroPorCodigoAPI(codigo));
+        } catch (err) {
+            window.location.reload();
+            navigate("/login", { replace: true });
+        }
+    }
+
+    const removerCarro = async carro => {
+        if (window.confirm('Deseja remover este carro?')) {
+            let retornoAPI =
+                await deleteCarroPorCodigoAPI(carro.codigo);
+            setAlerta({ status: retornoAPI.status, message: retornoAPI.message });
+            setListaCarros(await getCarrosDoModeloAPI(objeto.codigo));
+        }
+    }
+
+    const acaoCadastrarCarro = async e => {
+        e.preventDefault();
+        const metodo = editarCarro ? "PUT" : "POST";
+        try {
+            let retornoAPI = await cadastraCarrosAPI(carro, metodo);
+            setAlerta({ status: retornoAPI.status, message: retornoAPI.message });
+            setObjeto(retornoAPI.objeto);
+            if (!editarCarro) {
+                setEditarCarro(true);
+            }
+        } catch (err) {
+            window.location.reload();
+            navigate("/login", { replace: true });
+        }
+        recuperarCarro(objeto.codigo);
+    }
+
+    const handleChangeCarro = (e) => {
+        const name = e.target.name;
+        const value = e.target.value;
+        setCarro({ ...carro, [name]: value });
+    }
+
+    const recuperar = async codigo => {
+        try {
+            setObjeto(await getModeloPorCodigoAPI(codigo));
+        } catch (err) {
+            window.location.reload();
+            navigate("/login", { replace: true });
+        }
     }
 
     const acaoCadastrar = async e => {
         e.preventDefault();
         const metodo = editar ? "PUT" : "POST";
         try {
-            await fetch(`${process.env.REACT_APP_ENDERECO_API}/modelos`, {
-                method: metodo,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(objeto),
-            }).then(response => response.json())
-                .then(json => {
-                    setAlerta({ status: json.status, message: json.message });
-                    setObjeto(json.objeto);
-                    if (!editar) {
-                        setEditar(true);
-                    }
-                });
+            let retornoAPI = await cadastraModelosAPI(objeto, metodo);
+            setAlerta({ status: retornoAPI.status, message: retornoAPI.message });
+            setObjeto(retornoAPI.objeto);
+            if (!editar) {
+                setEditar(true);
+            }
         } catch (err) {
-            console.error(err.message);
-        }       
+            console.log(err);
+            window.location.reload();
+            navigate("/login", { replace: true });
+        }
         recuperaModelos();
     }
 
@@ -45,27 +115,30 @@ function Modelo() {
         const name = e.target.name;
         const value = e.target.value;
         setObjeto({ ...objeto, [name]: value });
-    }	    
+    }    
 
     const recuperaModelos = async () => {
-        await fetch(`${process.env.REACT_APP_ENDERECO_API}/modelos`)
-            .then(response => response.json())
-            .then(data => setListaObjetos(data))
-            .catch(err => setAlerta({status : "error", message: err}))
+        try {
+            setCarrengando(true);
+            setListaObjetos(await getModelosAPI());
+            setCarrengando(false);
+        } catch (err) {
+            window.location.reload();
+            navigate("/login", { replace: true });
+        }
     }
 
     const remover = async objeto => {
         if (window.confirm('Deseja remover este objeto?')) {
             try {
-                await fetch(`${process.env.REACT_APP_ENDERECO_API}/modelos/${objeto.codigo}`,
-                    { method: "DELETE" })
-                    .then(response => response.json())
-                    .then(json => setAlerta({ status: json.status, message: json.message }))
-                    recuperaModelos();
+                let retornoAPI = await deleteModeloPorCodigoAPI(objeto.codigo);
+                setAlerta({ status: retornoAPI.status, message: retornoAPI.message });
             } catch (err) {
-                console.log('Erro: ' + err)
+                window.location.reload();
+                navigate("/login", { replace: true });
             }
         }
+        recuperaModelos();
     }
 
     useEffect(() => {
@@ -80,13 +153,21 @@ function Modelo() {
                 recuperaModelos,
                 remover, objeto, setObjeto,
                 editar, setEditar,
-                recuperar, acaoCadastrar, handleChange
+                recuperar, acaoCadastrar, handleChange,
+                listaCarros, carro, setCarro, handleChangeCarro,
+                removerCarro, recuperarCarro, acaoCadastrarCarro,
+                setEditarCarro, editarCarro, recuperarCarros,
+                setExibirCarros
+
             }
         }>
-            <Tabela />
+            <Carregando carregando={carregando}>
+                {!exibirCarros ? <Tabela /> : <TabelaCarro />}
+            </Carregando>
             <Form />
+            <FormCarro />
         </ModeloContext.Provider>
     );
 }
 
-export default Modelo;
+export default WithAuth(Modelo);
